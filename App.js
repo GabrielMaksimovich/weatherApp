@@ -1,55 +1,19 @@
-import Loading from "./Loading";
-import {useEffect, useState} from "react";
-import * as Location from "expo-location";
-import {StyleSheet, Text} from "react-native";
-import axios from "axios";
-import Weather from "./Weather";
+import { View, StyleSheet } from "react-native";
 
-const API_KEY = 'e0b974d89588277d98d91c43108a2c6e';
+import Weather from "./Weather";
 
 
 export default function App() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [temp, setTemp] = useState(0);
-  const [city, setCity] = useState('');
-  const [condition, setCondition] = useState('');
-  const [errorMsg, setErrorMsg] = useState(null);
-
-  useEffect(() => {
-    (async () => {
-
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg('Permission to access location was denied');
-        return;
-      }
-
-      const { coords: { latitude, longitude }} = await Location.getCurrentPositionAsync({});
-      await getWeather(latitude, longitude);
-    })();
-  }, []);
-
-  const getWeather = async (latitude, longitude) => {
-    const { data: {main: {temp}, weather, name}, data } = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`)
-    setCondition(weather[0].main);
-    setCity(name);
-    console.log(name);
-    setTemp(temp);
-    setIsLoading(false);
-  }
-
-  let text = 'Waiting..';
-  if (errorMsg) {
-    text = errorMsg;
-  }
-
   return (
-      isLoading
-          ? <Loading />
-          : <Weather
-              temp={Math.round(temp)}
-              condition={condition}
-              city={city}
-          />
+      <View style={styles.container}>
+        <Weather/>
+      </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+
+  }
+})

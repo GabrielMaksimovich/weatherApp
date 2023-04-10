@@ -1,144 +1,215 @@
-import React from 'react';
-import PropsTypes from 'prop-types';
-import { StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React, {useEffect, useState} from 'react';
+import {
+    ActivityIndicator,
+    Alert, Dimensions, FlatList,
+    Image,
+    RefreshControl,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View
+} from 'react-native';
+import * as Location from "expo-location";
+import {FontAwesome5, Ionicons, MaterialCommunityIcons} from "@expo/vector-icons";
 
-const weatherOptions = {
-    Thunderstorm: {
-        iconName: 'weather-lightning',
-        gradient: ['#141e30', '#243b55']
-    },
-    Drizzle: {
-        iconName: 'weather-rainy',
-        gradient: ['#3a7db5', '#3a6073']
-    },
-    Rain: {
-        iconName: 'weather-pouring',
-        gradient: ['#000046', '#1cb5e0'],
-        title: 'Короткочасний дощ',
-        subtitle: 'Кращє бути вдома',
-    },
-    Snow: {
-        iconName: 'snowflake',
-        gradient: ['#83a4d4', '#b6fbff']
-    },
-    Dust: {
-        iconName: 'weather-windy-variant',
-        gradient: ['#b79891', '#94716b']
-    },
-    Smoke: {
-        iconName: 'weather-windy',
-        gradient: ['#56ccf2', '#2f80ed']
-    },
-    Haze: {
-        iconName: 'weather-hazy',
-        gradient: ['#3e5151', '#decba4']
-    },
-    Mist: {
-        iconName: 'weather-fog',
-        gradient: ['#606c88', '#3f4c6b']
-    },
-    Clear: {
-        iconName: 'weather-sunny',
-        gradient: ['#56ccf2', '#2f80ed']
-    },
-    Clouds: {
-        iconName: 'weather-cloudy',
-        gradient: ['#757f9a', '#d7dde8']
-    },
+const API_KEY = 'e0b974d89588277d98d91c43108a2c6e';
 
-}
+const Weather = () => {
+    const [forecast, setForecast] = useState(null);
+    const [refreshing, setRefreshing] = useState(false);
 
-export default function Weather({
-    temp,
-    condition,
-    city,
-  }) {
+    const loadForecast = async () => {
+        setRefreshing(true);
+
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission to access location was denied');
+        }
+
+        const location = await Location.getCurrentPositionAsync({});
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${location.coords.latitude}&lon=${location.coords.longitude}&cnt={cnt}&appid=${API_KEY}&units=metric`);
+        const data = await response.json();
+
+        console.log(data);
+
+        if (!response.ok) {
+            Alert.alert('Error', 'Something went wrong');
+        } else {
+            setForecast(data);
+        }
+
+        setRefreshing(false);
+    };
+
+    useEffect(() => {
+        loadForecast();
+    }, []);
+
+    if (!forecast) {
+        return (
+            <SafeAreaView>
+                <ActivityIndicator size='large'/>
+            </SafeAreaView>
+        )
+    }
+
+    const current = forecast.weather[0];
+
     return (
-        <LinearGradient
-            colors={weatherOptions[condition].gradient}
-            style={styles.container}>
-            <View style={{ ...styles.textContainer, ...styles.header }}>
-                <Text style={styles.city}>{city}</Text>
-            </View>
-            <View style={styles.halfContainer}>
-                <MaterialCommunityIcons name={weatherOptions[condition].iconName} size={96} color="white" />
-                <Text style={styles.temp}>{temp}°</Text>
+        <SafeAreaView style={styles.container}>
+            <ScrollView
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={() => loadForecast()}
+                    />
+                }
+                style={{marginTop:50}}
+            >
+                <Text style={styles.title}>
+                    Current weather
+                </Text>
+                <Text style={{alignItems:'center', textAlign:'center', fontSize: 24}}>
+                    {forecast.name}
+                </Text>
+                <View style={styles.current}>
+                    <Image
+                        style={styles.largeIcon}
+                        source={{
+                            uri: `https://openweathermap.org/img/wn/${current.icon}@4x.png`,
+                        }}
+                    />
+                    <Text style={styles.currentTemp}>
+                        {Math.round(forecast.main.temp)}°С
+                    </Text>
+                </View>
 
-                <View
-                    style={{
-                        width: '90%',
-                        height: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        backgroundColor: 'white',
-                    }}
-                />
-            </View>
-            <View style={{ ...styles.halfContainer, ...styles.textContainer }}>
-                <Text style={styles.title}>{weatherOptions[condition].title}</Text>
-                <Text style={styles.subtitle}>{weatherOptions[condition].subtitle}</Text>
-            </View>
-        </LinearGradient>
+                <Text style={styles.currentDescription}>
+                    {current.description}
+                </Text>
+
+                <View style={styles.extraInfo}>
+                    <View style={styles.info}>
+                        <View style={{alignItems: 'center'}}>
+                            <FontAwesome5 name="temperature-high" size={24} color="black"/>
+                        </View>
+
+                        <Text style={styles.text}>
+                            {Math.round(forecast.main.feels_like)}°С
+                        </Text>
+                        <Text style={styles.text}>
+                            Feels like
+                        </Text>
+                    </View>
+
+                    <View style={styles.info}>
+                        <View style={{alignItems: 'center'}}>
+                            <Ionicons name="water" size={24} color="black" />
+                        </View>
+
+                        <Text style={styles.text}>
+                            {Math.round(forecast.main.humidity)}%
+                        </Text>
+                        <Text style={styles.text}>
+                            Humidity
+                        </Text>
+                    </View>
+                </View>
+
+                <View style={styles.extraInfo}>
+                    <View style={styles.info}>
+                        <View style={{alignItems: 'center'}}>
+                            <FontAwesome5 name="wind" size={24} color="black" />
+                        </View>
+
+                        <Text style={styles.text}>
+                            {forecast.wind.speed} km/h
+                        </Text>
+                        <Text style={styles.text}>
+                            Wind speed
+                        </Text>
+                    </View>
+
+                    <View style={styles.info}>
+                        <View style={{alignItems: 'center'}}>
+                            <MaterialCommunityIcons name="scale" size={24} color="black" />
+                        </View>
+
+                        <Text style={styles.text}>
+                            {Math.round(forecast.main.pressure)} hPa
+                        </Text>
+                        <Text style={styles.text}>
+                            Air pressure
+                        </Text>
+                    </View>
+                </View>
+                {/*<View>*/}
+                {/*    <Text style={styles.subtitle}>Hourly Forecast</Text>*/}
+                {/*</View>*/}
+
+            </ScrollView>
+        </SafeAreaView>
     )
-}
-
-Weather.propTypes = {
-    temp: PropsTypes.number.isRequired,
-    condition: PropsTypes.oneOf(
-        [
-            "Thunderstorm",
-            "Drizzle",
-            "Rain",
-            "Snow",
-            "Fog",
-            "Smoke",
-            "Dust",
-            "Haze",
-            "Mist",
-            "Clear",
-            "Clouds"
-        ]
-    ).isRequired,
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-    },
-    header: {
-        paddingVertical: 20,
-    },
-    halfContainer: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    textContainer: {
-        paddingHorizontal: 18,
-        alignItems: "flex-start"
-    },
-    city: {
-        color: "white",
-        fontSize: 20,
-        marginBottom: 20,
-    },
-    temp: {
-        fontSize: 36,
-        color: "white",
-        fontWeight: "900",
-        marginBottom: 30,
+        backgroundColor: '#ecdbba',
     },
     title: {
-        color: "white",
-        fontSize: 44,
-        fontWeight: "300",
-        marginBottom: 10,
+        textAlign: 'center',
+        fontSize: 36,
+        fontWeight: 'bold',
+        color: '#c84b31'
+    },
+    current: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignContent: 'center',
+    },
+    largeIcon: {
+        width: 300,
+        height: 250
+    },
+    currentTemp: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    currentDescription: {
+        width: '100%',
+        textAlign: 'center',
+        fontWeight: '200',
+        fontSize: 24,
+        marginBottom: 5,
+    },
+    info: {
+        width: Dimensions.get('screen').width/2.5,
+        backgroundColor: 'rgba(0,0,0,0.1)',
+        padding: 10,
+        borderRadius: 15,
+        justifyContent: 'center',
+    },
+    extraInfo: {
+        flexDirection: 'row',
+        marginTop:20,
+        justifyContent: 'space-between',
+        padding:10,
+    },
+    text: {
+        fontSize:20,
+        color: '#000',
+        textAlign: 'center',
     },
     subtitle: {
-        color: "white",
         fontSize: 24,
-        fontWeight: "600",
-    }
+        marginVertical: 12,
+        marginLeft: 7,
+        color: '#c84b31',
+        fontWeight: 'bold',
+    },
 })
+
+export default Weather;
