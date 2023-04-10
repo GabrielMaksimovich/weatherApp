@@ -67,10 +67,7 @@ const Weather = () => {
                 }
                 style={{marginTop:50}}
             >
-                <Text style={styles.title}>
-                    Current weather
-                </Text>
-                <Text style={{alignItems:'center', textAlign:'center', fontSize: 24}}>
+                <Text style={{alignItems:'center', textAlign:'center', fontSize: 30, opacity: 0.5, fontWeight: 'bold'}}>
                     {forecast.name}
                 </Text>
                 <View style={styles.current}>
@@ -144,10 +141,6 @@ const Weather = () => {
                         </Text>
                     </View>
                 </View>
-                {/*<View>*/}
-                {/*    <Text style={styles.subtitle}>Hourly Forecast</Text>*/}
-                {/*</View>*/}
-
             </ScrollView>
         </SafeAreaView>
     )
@@ -157,12 +150,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#ecdbba',
-    },
-    title: {
-        textAlign: 'center',
-        fontSize: 36,
-        fontWeight: 'bold',
-        color: '#c84b31'
     },
     current: {
         flexDirection: 'row',
