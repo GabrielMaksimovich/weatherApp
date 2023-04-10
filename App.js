@@ -11,6 +11,7 @@ const API_KEY = 'e0b974d89588277d98d91c43108a2c6e';
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [temp, setTemp] = useState(0);
+  const [city, setCity] = useState('');
   const [condition, setCondition] = useState('');
   const [errorMsg, setErrorMsg] = useState(null);
 
@@ -29,8 +30,10 @@ export default function App() {
   }, []);
 
   const getWeather = async (latitude, longitude) => {
-    const { data: {main: {temp}, weather} } = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`)
+    const { data: {main: {temp}, weather, name}, data } = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`)
     setCondition(weather[0].main);
+    setCity(name);
+    console.log(name);
     setTemp(temp);
     setIsLoading(false);
   }
@@ -41,10 +44,12 @@ export default function App() {
   }
 
   return (
-      isLoading ? <Loading /> : <Weather temp={Math.round(temp)} condition={condition}/>
+      isLoading
+          ? <Loading />
+          : <Weather
+              temp={Math.round(temp)}
+              condition={condition}
+              city={city}
+          />
   );
 }
-
-const styles = StyleSheet.create({
-
-})
